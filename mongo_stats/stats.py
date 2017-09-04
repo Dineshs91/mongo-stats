@@ -1,3 +1,6 @@
+import time
+import curses
+
 from pymongo import MongoClient
 
 from mongo_stats.utils import json_format
@@ -7,7 +10,6 @@ db_client = MongoClient("mongodb://localhost:27017/admin", connect=True)
 db = db_client['admin']
 
 
-@json_format()
 def number_of_connections():
     server_status = db.command("serverStatus")
 
@@ -59,21 +61,36 @@ def list_all_databases():
     return result
 
 
-def start():
-    print("#### No of connections ####")
-    print(number_of_connections(), end="\n\n")
+def start(stdscr):
+    stdscr.nodelay(1)
+    while True:
+        char = stdscr.getch()
+        if char == 113:
+            break
+        connections = number_of_connections()
+        stdscr.addstr(0, 0, "Current: {}".format(connections["current"]))
+        stdscr.addstr(1, 0, "Available: {}".format(connections["available"]))
+        stdscr.addstr(2, 0, "Total Created: {}".format(connections["totalCreated"]))
+        stdscr.refresh()
 
-    print("#### Current operation ####")
-    print(current_operation(), end="\n\n")
+        time.sleep(2)
 
-    print("#### Current operation waiting for lock ####")
-    print(current_operation_waiting_for_lock(), end="\n\n")
+    # print(connections["current"], end="\n")
+    # print(connections["available"], end="\n")
+    # print(connections["totalCreated"], end="\n")
 
-    print("#### Collection stats ####")
-    dbs =  [database["name"] for database in db.command("listDatabases")['databases']]
-    print(collection_stats(db_client, dbs), end="\n\n")
+    # print("#### Current operation ####")
+    # print(current_operation(), end="\n\n")
+    #
+    # print("#### Current operation waiting for lock ####")
+    # print(current_operation_waiting_for_lock(), end="\n\n")
+    #
+    # print("#### Collection stats ####")
+    # dbs =  [database["name"] for database in db.command("listDatabases")['databases']]
+    # print(collection_stats(db_client, dbs), end="\n\n")
+    #
+    # print("### List all databases ###")
+    # print(list_all_databases())
 
-    print("### List all databases ###")
-    print(list_all_databases())
 
-start()
+curses.wrapper(start)
