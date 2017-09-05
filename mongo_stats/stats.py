@@ -16,12 +16,10 @@ def number_of_connections():
     return server_status["connections"]
 
 
-@json_format()
 def current_operation():
     return db.current_op()
 
 
-@json_format()
 def current_operation_waiting_for_lock():
     return db.current_op({
         "waitingForLock": True,
@@ -32,7 +30,6 @@ def current_operation_waiting_for_lock():
     })
 
 
-@json_format()
 def list_all_databases():
     """
     {
@@ -62,15 +59,21 @@ def list_all_databases():
 
 
 def start(stdscr):
+    curses.start_color()
+    curses.use_default_colors()
     stdscr.nodelay(1)
     while True:
         char = stdscr.getch()
         if char == 113:
             break
+
+        # Number of connections
         connections = number_of_connections()
-        stdscr.addstr(0, 0, "Current: {}".format(connections["current"]))
-        stdscr.addstr(1, 0, "Available: {}".format(connections["available"]))
-        stdscr.addstr(2, 0, "Total Created: {}".format(connections["totalCreated"]))
+        curses.init_pair(1, curses.COLOR_GREEN, -1)
+        stdscr.addstr(0, 0, "Connections:", curses.color_pair(1))
+        stdscr.addstr(1, 3, "Current: {}".format(connections["current"]))
+        stdscr.addstr(2, 3, "Available: {}".format(connections["available"]))
+        stdscr.addstr(3, 3, "Total Created: {}".format(connections["totalCreated"]))
         stdscr.refresh()
 
         time.sleep(2)
