@@ -1,7 +1,3 @@
-from mongo_stats.utils import json_format
-
-
-@json_format()
 def collection_stats(db_client, databases):
     result = {}
     for database in databases:
@@ -13,15 +9,14 @@ def collection_stats(db_client, databases):
 
         collections = db.collection_names()
         for collection in collections:
-            if collection == "users_raw":
-                collstats = db.command("collstats", collection, scale=1024 * 1024)
+            collstats = db.command("collstats", collection, scale=1024 * 1024)
 
-                result[database].append({
-                    "name": collection,
-                    "ns": collstats["ns"],
-                    "count": collstats["count"],
-                    "avgObjSize": collstats["avgObjSize"],
-                    "storageSize": collstats["storageSize"]
-                })
+            result[database].append({
+                "name": collection,
+                "ns": collstats["ns"],
+                "count": collstats["count"],
+                "avgObjSize": collstats.get("avgObjSize"),
+                "storageSize": collstats["storageSize"]
+            })
 
     return result
