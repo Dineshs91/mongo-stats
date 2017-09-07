@@ -17,7 +17,22 @@ def number_of_connections():
 
 
 def get_current_operation():
-    return db.current_op()
+    current_operation = db.current_op()
+    current_operations = current_operation['inprog']
+    current_operation_count = len(current_operations)
+
+    operations = []
+    for current_operation in current_operations:
+        operations.append({
+            "opid": current_operation['opid'],
+            "secs_running": current_operation['secs_running'],
+            "waitingForLock": current_operation['waitingForLock']
+        })
+
+    return {
+        "current_operation_count": current_operation_count,
+        "operations": operations
+    }
 
 
 def current_operation_waiting_for_lock():
@@ -101,6 +116,7 @@ def start(stdscr):
         stdscr.addstr(3, 3, "Total Created: {}".format(connections["totalCreated"]))
 
         # Current operation
+        # TODO: Update this.
         current_operation_count = len(get_current_operation()['inprog'])
         stdscr.addstr(5, 0, "Current operation:", curses.color_pair(1))
         stdscr.addstr(6, 3, "Operations: {}".format(current_operation_count))
