@@ -1,4 +1,3 @@
-import time
 import curses
 
 from pymongo import MongoClient
@@ -16,7 +15,7 @@ def number_of_connections():
     return server_status["connections"]
 
 
-def get_current_operation():
+def get_current_operations():
     current_operation = db.current_op()
     current_operations = current_operation['inprog']
     current_operation_count = len(current_operations)
@@ -30,7 +29,7 @@ def get_current_operation():
         })
 
     return {
-        "current_operation_count": current_operation_count,
+        "count": current_operation_count,
         "operations": operations
     }
 
@@ -81,100 +80,59 @@ def start(stdscr):
         if not screen.start():
             break
 
+        # Number of connections
         connections = number_of_connections()
         screen.print("Connections:", "heading")
         screen.print("Current: {}".format(connections["current"]))
         screen.print("Available: {}".format(connections["available"]))
         screen.print("Total Created: {}".format(connections["totalCreated"]))
 
-        # char = stdscr.getch()
-        # if char == 113:
-        #     break
-        #
-        # curses.init_pair(1, curses.COLOR_GREEN, -1)
-        #
-        # # Number of connections
-        # connections = number_of_connections()
-        # stdscr.addstr(0, 0, "Connections:", curses.color_pair(1))
-        # stdscr.addstr(1, 3, "Current: {}".format(connections["current"]))
-        # stdscr.addstr(2, 3, "Available: {}".format(connections["available"]))
-        # stdscr.addstr(3, 3, "Total Created: {}".format(connections["totalCreated"]))
+        # Current operation
+        current_operations = get_current_operations()
+        screen.print("Current operation:", "heading")
+        screen.print("Count: {}".format(current_operations['count']))
 
-        # # Current operation
-        # # TODO: Update this.
-        # current_operation_count = len(get_current_operation()['inprog'])
-        # stdscr.addstr(5, 0, "Current operation:", curses.color_pair(1))
-        # stdscr.addstr(6, 3, "Operations: {}".format(current_operation_count))
-        #
-        # # List all databases
-        # databases = list_all_databases()
-        # stdscr.addstr(8, 0, "Databases:", curses.color_pair(1))
-        #
-        # cursor_pos_col = 3
-        # stdscr.addstr(9, 3, "name")
-        #
-        # cursor_pos_col += len("name") + 2
-        # stdscr.addstr(9, cursor_pos_col, "dataSize")
-        #
-        # cursor_pos_col += len("dataSize") + 2
-        # stdscr.addstr(9, cursor_pos_col, "indexes")
-        #
-        # cursor_pos_col += len("indexes") + 2
-        # stdscr.addstr(9, cursor_pos_col, "indexSize")
-        #
-        # cursor_pos_col += len("indexSize") + 2
-        # stdscr.addstr(9, cursor_pos_col, "collections")
-        #
-        # cursor_pos_row = 11
-        # for database in databases:
-        #     database_name = database['name']
-        #     database_size = database['dataSize']
-        #     database_indexes = database['indexes']
-        #     database_index_size = database['indexSize']
-        #     database_collections = database['collections']
-        #
-        #     cursor_pos_col = 3
-        #     stdscr.addstr(cursor_pos_row, cursor_pos_col, database_name)
-        #
-        #     cursor_pos_col += len(database_name) + 2
-        #     stdscr.addstr(cursor_pos_row, cursor_pos_col, str(database_size))
-        #
-        #     cursor_pos_col += len(str(database_size)) + 2
-        #     stdscr.addstr(cursor_pos_row, cursor_pos_col, str(database_indexes))
-        #
-        #     cursor_pos_col += len(str(database_indexes)) + 2
-        #     stdscr.addstr(cursor_pos_row, cursor_pos_col, str(database_index_size))
-        #
-        #     cursor_pos_col += len(str(database_index_size)) + 2
-        #     stdscr.addstr(cursor_pos_row, cursor_pos_col, str(database_collections))
-        #
-        #     cursor_pos_row += 1
-        #
-        # cursor_pos_row += 1
-        #
-        # # Collection
-        # dbs = [database["name"] for database in databases]
-        # stdscr.addstr(cursor_pos_row, 0, "Collection:", curses.color_pair(1))
-        # db_collections = collection_stats(db_client, dbs)
-        #
-        # cursor_pos_row += 1
-        # for collections in db_collections:
-        #     stdscr.addstr(cursor_pos_row, 3, collections)
-        #     cursor_pos_row += 1
-        #     for collection in db_collections[collections]:
-        #         collection_name = collection["name"]
-        #         collection_count = collection["count"]
-        #
-        #         # 3 after the starting 3 column index.
-        #         cursor_pos_col = 6
-        #         stdscr.addstr(cursor_pos_row, cursor_pos_col, collection_name + ":")
-        #
-        #         cursor_pos_col += len(collection_name) + 2
-        #         stdscr.addstr(cursor_pos_row, cursor_pos_col, str(collection_count))
-        #
-        #         cursor_pos_row += 1
+        operations = current_operations['operations']
+        for operation in operations:
+            op_id = operation['opid']
+            secs_running = operation['secs_running']
+            waiting_for_lock = operation['waitingForLock']
+            screen.print("Op id: {}".format(op_id), same_row=True)
+            screen.print("Secs running: {}".format(secs_running), same_row=True)
+            screen.print("Waiting for lock: {}".format(waiting_for_lock), same_row=True)
+            screen.print("")
 
-        # stdscr.refresh()
+        # List all databases
+        databases = list_all_databases()
+        screen.print("Databases:", "heading")
+        for database in databases:
+            database_name = database['name']
+            database_size = database['dataSize']
+            database_indexes = database['indexes']
+            database_index_size = database['indexSize']
+            database_collections = database['collections']
+
+            screen.print(database_name, same_row=True)
+            screen.print(str(database_size), same_row=True)
+            screen.print(str(database_indexes), same_row=True)
+            screen.print(str(database_index_size), same_row=True)
+            screen.print(str(database_collections), same_row=True)
+            screen.print("")
+
+        # Collection
+        dbs = [database["name"] for database in databases]
+        db_collections = collection_stats(db_client, dbs)
+        screen.print("Collections:", "heading")
+
+        for collections in db_collections:
+            screen.print(collections)
+            for collection in db_collections[collections]:
+                collection_name = collection['name']
+                collection_count = collection['count']
+
+                screen.print("{}: {}".format(collection_name, str(collection_count)), same_row=True)
+                screen.print("")
+
         screen.sleep(5, stdscr)
 
 curses.wrapper(start)

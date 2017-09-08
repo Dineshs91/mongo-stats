@@ -23,16 +23,23 @@ class Screen:
         # Create an init pair with green color.
         curses.init_pair(1, curses.COLOR_GREEN, -1)
 
-    def print(self, text, label=None):
+    def print(self, text, label=None, same_row=False):
         # Clear before writing.
         self.stdscr.clrtoeol()
         if label == "heading":
+            self.col = 0
             self.stdscr.addstr(self.row, self.col, text, curses.color_pair(1))
         else:
-            self.col = 3
+            if self.col == 0:
+                self.col = 3
             self.stdscr.addstr(self.row, self.col, text)
 
-        self.row += 1
+        if not same_row:
+            self.row += 1
+            self.col = 0
+        else:
+            # Update col cursor position.
+            self.col += len(text) + 2
 
     def start(self):
         self.stdscr.refresh()
