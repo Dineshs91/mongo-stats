@@ -74,27 +74,39 @@ class Screen:
         """
         headings_col_pos = {}
         for heading in headings:
-            headings_col_pos[heading] = len(heading)
+            headings_col_pos[heading] = len(heading) + 2
 
         for row in rows:
             for key in row.keys():
                 value = row[key]
 
                 if len(value) > headings_col_pos[key]:
-                    headings_col_pos[key] = len(value)
+                    headings_col_pos[key] = len(value) + 2
 
         # print headings
         for heading in headings:
             self.stdscr.addstr(self.row, self.col, heading, curses.color_pair(2))
-            self.col += headings_col_pos[heading] + 2
+            self.col += headings_col_pos[heading]
 
         self.row += 1
         self.col = self.init_col
+
         # print rows
         for row in rows:
             for heading in headings:
+                heading_len = headings_col_pos[heading]
+                value_len = len(row[heading])
+
+                diff_len = heading_len - value_len
+                # Offset is used to center the values in a table.
+                offset = diff_len // 2
+
+                self.col += offset
                 self.stdscr.addstr(self.row, self.col, row[heading])
-                self.col += headings_col_pos[heading] + 2
+
+                # Remove the offset here.
+                self.col += headings_col_pos[heading] - offset
+
             self.col = self.init_col
             self.row += 1
 
