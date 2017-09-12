@@ -3,6 +3,7 @@ import curses
 from pymongo import MongoClient
 
 from mongo_stats.screen import Screen
+from mongo_stats.utils import screen_col
 from mongo_stats.collection import collection_stats
 
 db_client = MongoClient("mongodb://localhost:27017/admin", connect=True)
@@ -126,12 +127,14 @@ def start(stdscr):
 
         for collections in db_collections:
             screen.print(collections)
-            for collection in db_collections[collections]:
-                collection_name = collection['name']
-                collection_count = collection['count']
 
-                screen.print("{}: {}".format(collection_name, str(collection_count)), same_row=True)
-                screen.print("")
+            headings = [collection['name'] for collection in db_collections[collections]]
+            rows = {}
+            for collection in db_collections[collections]:
+                rows[collection['name']] = str(collection['count'])
+
+            with screen_col(screen, 6):
+                screen.print_table(headings, [rows])
 
         screen.sleep(5, stdscr)
 

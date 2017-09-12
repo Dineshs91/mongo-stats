@@ -23,6 +23,16 @@ class Screen:
         # Create an init pair with green color.
         curses.init_pair(1, curses.COLOR_GREEN, -1)
 
+        # Table heading color
+        curses.init_pair(2, curses.COLOR_YELLOW, -1)
+
+    def start(self):
+        self.stdscr.refresh()
+        char = self.stdscr.getch()
+        if char == 113:
+            return False
+        return True
+
     def print(self, text, label=None, same_row=False):
         # Clear before writing.
         self.stdscr.clrtoeol()
@@ -41,12 +51,54 @@ class Screen:
             # Update col cursor position.
             self.col += len(text) + 2
 
-    def start(self):
-        self.stdscr.refresh()
-        char = self.stdscr.getch()
-        if char == 113:
-            return False
-        return True
+    def print_table(self, headings, rows):
+        """
+        Send a list of headings and list of dict objects in rows.
+
+        Ex:
+        headings = ['s.no', 'name']
+        rows = [
+            {
+                "s.no": 1,
+                "name": "John Doe"
+            },
+            {
+                "s.no": 2,
+                "name": "Red John"
+            }
+        ]
+
+        s.no     name
+         1     John Doe
+         2     Red John
+        """
+        headings_col_pos = {}
+        for heading in headings:
+            headings_col_pos[heading] = len(heading)
+
+        for row in rows:
+            for key in row.keys():
+                value = row[key]
+
+                if len(value) > headings_col_pos[key]:
+                    headings_col_pos[key] = len(value)
+
+        # print headings
+        for heading in headings:
+            self.stdscr.addstr(self.row, self.col, heading, curses.color_pair(2))
+            self.col += headings_col_pos[heading] + 2
+
+        self.row += 1
+        self.col = self.init_col
+        # print rows
+        for row in rows:
+            for heading in headings:
+                self.stdscr.addstr(self.row, self.col, row[heading])
+                self.col += headings_col_pos[heading] + 2
+            self.col = self.init_col
+            self.row += 1
+
+        self.row += 1
 
     def clear(self):
         self.row = self.init_row
