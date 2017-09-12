@@ -38,6 +38,9 @@ class Screen:
         self.stdscr.clrtoeol()
         if label == "heading":
             self.col = 0
+
+            # For heading make sure there is an empty line before.
+            self.row += 1
             self.stdscr.addstr(self.row, self.col, text, curses.color_pair(1))
         else:
             if self.col == 0:
@@ -85,8 +88,16 @@ class Screen:
 
         # print headings
         for heading in headings:
+            heading_len = headings_col_pos[heading]
+            value_len = len(heading)
+
+            diff_len = heading_len - value_len
+            # Offset is used to center the values in a table.
+            offset = diff_len // 2
+
+            self.col += offset
             self.stdscr.addstr(self.row, self.col, heading, curses.color_pair(2))
-            self.col += headings_col_pos[heading]
+            self.col += headings_col_pos[heading] - offset
 
         self.row += 1
         self.col = self.init_col
@@ -110,8 +121,6 @@ class Screen:
             self.col = self.init_col
             self.row += 1
 
-        self.row += 1
-
     def clear(self):
         self.row = self.init_row
         self.col = self.init_col
@@ -122,8 +131,8 @@ class Screen:
         Pressing a `q` button won't get processed until the sleep
         time is over.
 
-        This custom sleep, sleeps over steps of `freq` values, so that
-        we can response to `q` faster.
+        This custom sleep, sleeps in steps of `freq` values, so that
+        we can respond to `q` faster.
         """
         freq = 0.1
 

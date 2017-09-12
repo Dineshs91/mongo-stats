@@ -106,19 +106,19 @@ def start(stdscr):
         # List all databases
         databases = list_all_databases()
         screen.print("Databases:", "heading")
+        database_rows = []
         for database in databases:
-            database_name = database['name']
-            database_size = database['dataSize']
-            database_indexes = database['indexes']
-            database_index_size = database['indexSize']
-            database_collections = database['collections']
+            database_rows.append({
+                "name": database['name'],
+                "dataSize": str(database['dataSize']),
+                "indexes": str(database['indexes']),
+                "indexSize": str(database['indexSize']),
+                "collections": str(database['collections'])
+            })
 
-            screen.print(database_name, same_row=True)
-            screen.print(str(database_size), same_row=True)
-            screen.print(str(database_indexes), same_row=True)
-            screen.print(str(database_index_size), same_row=True)
-            screen.print(str(database_collections), same_row=True)
-            screen.print("")
+        headings = ["name", "dataSize", "indexes", "indexSize", "collections"]
+        with screen_col(screen, 3):
+            screen.print_table(headings, database_rows)
 
         # Collection
         dbs = [database["name"] for database in databases]
