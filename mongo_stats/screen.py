@@ -45,7 +45,11 @@ class Screen:
         else:
             if self.col == 0:
                 self.col = 3
-            self.stdscr.addstr(self.row, self.col, text)
+
+            # Print only if the text can be displayed in the visible screen.
+            # Otherwise the window has to be maximised.
+            if (self.col + len(text)) < self.stdscr.getmaxyx()[1]:
+                self.stdscr.addstr(self.row, self.col, text)
 
         if not same_row:
             self.row += 1
@@ -75,6 +79,9 @@ class Screen:
          1     John Doe
          2     Red John
         """
+        self.stdscr.clrtoeol()
+        # Store the max length of each column in the table. This includes the heading and
+        # the actual text.
         headings_col_pos = {}
         for heading in headings:
             headings_col_pos[heading] = len(heading) + 2
@@ -88,16 +95,21 @@ class Screen:
 
         # print headings
         for heading in headings:
-            heading_len = headings_col_pos[heading]
+            col_max_len = headings_col_pos[heading]
             value_len = len(heading)
 
-            diff_len = heading_len - value_len
+            diff_len = col_max_len - value_len
             # Offset is used to center the values in a table.
             offset = diff_len // 2
 
-            self.col += offset
-            self.stdscr.addstr(self.row, self.col, heading, curses.color_pair(2))
-            self.col += headings_col_pos[heading] - offset
+            import pdb
+            # pdb.set_trace()
+            if (self.col + headings_col_pos[heading]) < self.stdscr.getmaxyx()[1]:
+                self.col += offset
+                self.stdscr.addstr(self.row, self.col, heading, curses.color_pair(2))
+                self.col += headings_col_pos[heading] - offset
+            else:
+                break
 
         self.row += 1
         self.col = self.init_col
@@ -105,21 +117,24 @@ class Screen:
         # print rows
         for row in rows:
             for heading in headings:
-                heading_len = headings_col_pos[heading]
+                col_max_len = headings_col_pos[heading]
                 value_len = len(row[heading])
 
-                diff_len = heading_len - value_len
+                diff_len = col_max_len - value_len
                 # Offset is used to center the values in a table.
                 offset = diff_len // 2
 
-                self.col += offset
-                self.stdscr.addstr(self.row, self.col, row[heading])
+                if (self.col + headings_col_pos[heading]) < self.stdscr.getmaxyx()[1]:
+                    self.col += offset
+                    self.stdscr.addstr(self.row, self.col, row[heading])
 
-                # Remove the offset here.
-                self.col += headings_col_pos[heading] - offset
+                    # Remove the offset here.
+                    self.col += headings_col_pos[heading] - offset
+                else:
+                    break
 
-            self.col = self.init_col
             self.row += 1
+            self.col = self.init_col
 
     def clear(self):
         self.row = self.init_row
