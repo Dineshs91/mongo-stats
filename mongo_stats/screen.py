@@ -95,19 +95,9 @@ class Screen:
 
         # print headings
         for heading in headings:
-            col_max_len = headings_col_pos[heading]
-            value_len = len(heading)
-
-            diff_len = col_max_len - value_len
-            # Offset is used to center the values in a table.
-            offset = diff_len // 2
-
-            import pdb
-            # pdb.set_trace()
             if (self.col + headings_col_pos[heading]) < self.stdscr.getmaxyx()[1]:
-                self.col += offset
                 self.stdscr.addstr(self.row, self.col, heading, curses.color_pair(2))
-                self.col += headings_col_pos[heading] - offset
+                self.col += headings_col_pos[heading] + 3
             else:
                 break
 
@@ -117,19 +107,9 @@ class Screen:
         # print rows
         for row in rows:
             for heading in headings:
-                col_max_len = headings_col_pos[heading]
-                value_len = len(row[heading])
-
-                diff_len = col_max_len - value_len
-                # Offset is used to center the values in a table.
-                offset = diff_len // 2
-
                 if (self.col + headings_col_pos[heading]) < self.stdscr.getmaxyx()[1]:
-                    self.col += offset
                     self.stdscr.addstr(self.row, self.col, row[heading])
-
-                    # Remove the offset here.
-                    self.col += headings_col_pos[heading] - offset
+                    self.col += headings_col_pos[heading] + 3
                 else:
                     break
 
