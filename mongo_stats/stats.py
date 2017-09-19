@@ -1,5 +1,6 @@
 import curses
 
+import click
 from pymongo import MongoClient
 
 from mongo_stats.screen import Screen
@@ -73,7 +74,7 @@ def list_all_databases():
     return result
 
 
-def start(stdscr):
+def render(stdscr):
     screen = Screen(stdscr)
 
     while True:
@@ -142,4 +143,11 @@ def start(stdscr):
 
         screen.sleep(5, stdscr)
 
-curses.wrapper(start)
+
+@click.command()
+@click.option("--uri", help="Provide a mongodb connection string.")
+def start(uri):
+    if not uri:
+        print("Please provide a mongodb connection string")
+        exit(1)
+    curses.wrapper(render)
