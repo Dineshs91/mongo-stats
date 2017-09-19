@@ -128,13 +128,17 @@ def start(stdscr):
         for collections in db_collections:
             screen.print(collections)
 
-            headings = [collection['name'] for collection in db_collections[collections]]
-            rows = {}
+            headings = ["collection", "document_count"]
+            rows = []
             for collection in db_collections[collections]:
-                rows[collection['name']] = str(collection['count'])
+                row = {
+                    "collection": collection['name'],
+                    "document_count": str(collection['count'])
+                }
+                rows.append(row)
 
             with screen_col(screen, 6):
-                screen.print_table(headings, [rows])
+                screen.print_table(headings, rows)
 
         screen.sleep(5, stdscr)
 
