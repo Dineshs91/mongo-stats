@@ -120,7 +120,8 @@ class Screen:
         self.row = self.init_row
         self.col = self.init_col
 
-    def sleep(self, secs, stdscr):
+    @staticmethod
+    def sleep(secs, stdscr):
         """
         Sleeping for a long time will freeze the screen for the user.
         Pressing a `q` button won't get processed until the sleep

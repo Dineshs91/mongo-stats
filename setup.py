@@ -10,7 +10,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "mongo_stats=mongo_stats.stats:start"
+            "mongo_stats=mongo_stats.render:start"
         ]
     },
 )
