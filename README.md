@@ -7,3 +7,6 @@ Mongo stats in command line
 ## Development
 
 Install locally using `pip install -e .`
+
+`mongo_stats --connection-string mongodb://localhost:27017/admin` (Update the connection string
+accordingly)
