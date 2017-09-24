@@ -37,7 +37,7 @@ class Screen:
         # Clear before writing.
         self.stdscr.clrtoeol()
         if label == "heading":
-            self.col = 0
+            self.col = self.init_col
 
             # For heading make sure there is an empty line before.
             self.row += 1
@@ -53,7 +53,7 @@ class Screen:
 
         if not same_row:
             self.row += 1
-            self.col = 0
+            self.col = self.init_col
         else:
             # Update col cursor position.
             self.col += len(text) + 2
