@@ -1,6 +1,7 @@
 import curses
 
 import click
+from pymongo import MongoClient
 
 from mongo_stats.stats import Stats
 from mongo_stats.screen import Screen
@@ -77,6 +78,11 @@ def render(stdscr):
 
         screen.sleep(5, stdscr)
 
+
+def uri_valid():
+    MongoClient(uri, connect=True)
+
+
 @click.command()
 @click.option("--connection-string", help="Provide a mongodb connection string.")
 def start(connection_string):
@@ -86,4 +92,8 @@ def start(connection_string):
 
     global uri
     uri = connection_string
+
+    if not uri_valid():
+        print("Unable to connect. Please check your connection string.")
+        exit(1)
     curses.wrapper(render)
