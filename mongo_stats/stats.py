@@ -7,71 +7,76 @@ from mongo_stats.screen import Screen
 from mongo_stats.utils import screen_col
 from mongo_stats.collection import collection_stats
 
-db_client = MongoClient("mongodb://localhost:27017/admin", connect=True)
-db = db_client['admin']
+
+class Stats:
+    def __init__(self, connection_string):
+        self.db_client = MongoClient(connection_string, connect=True)
+        self.db = self.db_client["admin"]
+
+    def get_db_client(self):
+        return self.db_client
+
+    def number_of_connections(self):
+        server_status = self.db.command("serverStatus")
+
+        return server_status["connections"]
 
 
-def number_of_connections():
-    server_status = db.command("serverStatus")
+    def get_current_operations(self):
+        current_operation = self.db.current_op()
+        current_operations = current_operation['inprog']
+        current_operation_count = len(current_operations)
 
-    return server_status["connections"]
+        operations = []
+        for current_operation in current_operations:
+            operations.append({
+                "opid": current_operation['opid'],
+                "secs_running": current_operation['secs_running'],
+                "waitingForLock": current_operation['waitingForLock']
+            })
+
+        return {
+            "count": current_operation_count,
+            "operations": operations
+        }
 
 
-def get_current_operations():
-    current_operation = db.current_op()
-    current_operations = current_operation['inprog']
-    current_operation_count = len(current_operations)
-
-    operations = []
-    for current_operation in current_operations:
-        operations.append({
-            "opid": current_operation['opid'],
-            "secs_running": current_operation['secs_running'],
-            "waitingForLock": current_operation['waitingForLock']
+    def current_operation_waiting_for_lock(self):
+        return self.db.current_op({
+            "waitingForLock": True,
+            "$or": [
+                {"op": {"$in": ["insert", "update", "remove"]}},
+                {"query.findandmodify": { "$exists": True}}
+            ]
         })
 
-    return {
-        "count": current_operation_count,
-        "operations": operations
-    }
 
+    def list_all_databases(self):
+        """
+        {
+          "name": "admin",
+          "dataSize": 167936.0,
+          "empty": false
+        }
+        """
+        databases = [database["name"] for database in self.db.command("listDatabases")['databases']]
 
-def current_operation_waiting_for_lock():
-    return db.current_op({
-        "waitingForLock": True,
-        "$or": [
-            {"op": {"$in": ["insert", "update", "remove"]}},
-            {"query.findandmodify": { "$exists": True}}
-        ]
-    })
+        result = []
+        for database in databases:
+            database = self.db_client[database]
+            db_stat = database.command("dbStats", scale=1024 * 1024)
 
+            result.append({
+                "name": db_stat["db"],
+                "avgObjSize": db_stat["avgObjSize"],
+                "dataSize": db_stat["dataSize"],
+                "indexes": db_stat["indexes"],
+                "indexSize": db_stat["indexSize"],
+                "storageSize": db_stat["storageSize"],
+                "collections": db_stat["collections"]
+            })
 
-def list_all_databases():
-    """
-    {
-      "name": "admin",
-      "dataSize": 167936.0,
-      "empty": false
-    }
-    """
-    databases = [database["name"] for database in db.command("listDatabases")['databases']]
-
-    result = []
-    for database in databases:
-        database = db_client[database]
-        db_stat = database.command("dbStats", scale=1024 * 1024)
-
-        result.append({
-            "name": db_stat["db"],
-            "avgObjSize": db_stat["avgObjSize"],
-            "dataSize": db_stat["dataSize"],
-            "indexes": db_stat["indexes"],
-            "indexSize": db_stat["indexSize"],
-            "storageSize": db_stat["storageSize"],
-            "collections": db_stat["collections"]
-        })
-
-    return result
+        return result
 
 
 def render(stdscr):
@@ -82,15 +87,16 @@ def render(stdscr):
         if not screen.start():
             break
 
+        stats = Stats(uri)
         # Number of connections
-        connections = number_of_connections()
+        connections = stats.number_of_connections()
         screen.print("Connections:", "heading")
         screen.print("Current: {}".format(connections["current"]))
         screen.print("Available: {}".format(connections["available"]))
         screen.print("Total Created: {}".format(connections["totalCreated"]))
 
         # Current operation
-        current_operations = get_current_operations()
+        current_operations = stats.get_current_operations()
         screen.print("Current operation:", "heading")
         screen.print("Count: {}".format(current_operations['count']))
 
@@ -105,7 +111,7 @@ def render(stdscr):
             screen.print("")
 
         # List all databases
-        databases = list_all_databases()
+        databases = stats.list_all_databases()
         screen.print("Databases:", "heading")
         database_rows = []
         for database in databases:
@@ -123,7 +129,7 @@ def render(stdscr):
 
         # Collection
         dbs = [database["name"] for database in databases]
-        db_collections = collection_stats(db_client, dbs)
+        db_collections = collection_stats(stats.get_db_client(), dbs)
         screen.print("Collections:", "heading")
 
         for collections in db_collections:
@@ -145,9 +151,11 @@ def render(stdscr):
 
 
 @click.command()
-@click.option("--uri", help="Provide a mongodb connection string.")
-def start(uri):
-    if not uri:
+@click.option("--connection-string", help="Provide a mongodb connection string.")
+def start(connection_string):
+    if not connection_string:
         print("Please provide a mongodb connection string")
         exit(1)
+    global uri
+    uri = connection_string
     curses.wrapper(render)
