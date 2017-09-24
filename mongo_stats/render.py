@@ -9,7 +9,7 @@ from mongo_stats.utils import screen_col
 
 
 def render(stdscr):
-    screen = Screen(stdscr)
+    screen = Screen(stdscr, col=2)
 
     while True:
         screen.clear()
@@ -80,7 +80,12 @@ def render(stdscr):
 
 
 def uri_valid():
-    MongoClient(uri, connect=True)
+    try:
+        client = MongoClient(uri, connect=True, serverSelectionTimeoutMS=200)
+        client.server_info()
+    except:
+        return False
+    return True
 
 
 @click.command()
