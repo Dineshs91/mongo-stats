@@ -2,12 +2,17 @@ from pymongo import MongoClient
 
 
 class Stats:
-    def __init__(self, connection_string):
+    def __init__(self, connection_string, scale=1024 * 1024):
         self.db_client = MongoClient(connection_string, connect=True)
         self.db = self.db_client["admin"]
 
+        self.scale = scale
+
     def get_db_client(self):
         return self.db_client
+
+    def get_scale(self):
+        return self.scale
 
     def number_of_connections(self):
         server_status = self.db.command("serverStatus")
@@ -54,7 +59,7 @@ class Stats:
         result = []
         for database in databases:
             database = self.db_client[database]
-            db_stat = database.command("dbStats", scale=1024 * 1024)
+            db_stat = database.command("dbStats", scale=self.scale)
 
             result.append({
                 "name": db_stat["db"],
@@ -79,7 +84,7 @@ class Stats:
 
             collections = db.collection_names()
             for collection in collections:
-                collstats = db.command("collstats", collection, scale=1024 * 1024)
+                collstats = db.command("collstats", collection, scale=self.scale)
 
                 result[database].append({
                     "name": collection,

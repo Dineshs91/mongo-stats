@@ -17,6 +17,9 @@ def render(stdscr):
             break
 
         stats = Stats(uri)
+        # Display scale
+        screen.print("Scale: {}".format(str(stats.get_scale())))
+
         # Number of connections
         connections = stats.number_of_connections()
         screen.print("Connections:", "heading")
@@ -64,12 +67,14 @@ def render(stdscr):
         for collections in db_collections:
             screen.print(collections)
 
-            headings = ["collection", "document_count"]
+            headings = ["collection", "document_count", "avgObjSize", "storageSize"]
             rows = []
             for collection in db_collections[collections]:
                 row = {
                     "collection": collection['name'],
-                    "document_count": str(collection['count'])
+                    "document_count": str(collection['count']),
+                    "avgObjSize": str(collection['avgObjSize']),
+                    "storageSize": str(collection['storageSize'])
                 }
                 rows.append(row)
 
